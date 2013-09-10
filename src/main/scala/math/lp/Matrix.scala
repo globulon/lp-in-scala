@@ -1,5 +1,7 @@
 package math.lp
 
+import scala.language.postfixOps
+
 trait Domains {
   protected type Domain[A] = Set[A]
 
@@ -9,26 +11,42 @@ trait Domains {
 trait Vectors {
   self: Domains =>
 
-  protected trait Vector[A, C] extends ((A) => C){
+  protected trait Vector[A, C] extends ((A) => C) {
     def domain: Domain[A]
 
     def get: (A) => C
 
     def apply(a: A) = get(a)
+
+    def entries: Iterable[(A, C)]
+
+    def size: Int
   }
 
   protected def sparseVector[A, C: Numeric](d: Domain[A], m: Map[A, C]): Vector[A, C] = new Vector[A, C] {
     def domain: Domain[A] = d
 
     def get = m.getOrElse(_, implicitly[Numeric[C]].zero)
+
+    def entries = m.toIterable
+
+    def size = m.count(p => implicitly[Numeric[C]].zero != p._2)
   }
+
+  protected def filterValues[A, C: Numeric](v: Vector[A, C])(p: C => Boolean): Vector[A, C] =
+    sparseVector(v.domain, v.entries.filter(e => p(e._2)).toMap)
+
+  protected def filterKeys[A, C: Numeric](v: Vector[A, C])(p: A => Boolean): Vector[A, C] =
+    sparseVector(v.domain, v.entries.filter(e => p(e._1)).toMap)
+
+  protected def map[A, C: Numeric, D: Numeric](v: Vector[A, C])(f: (A, C) => D): Vector[A, D] =
+    sparseVector(v.domain, v.entries.map {p => (p._1, f.tupled(p))} toMap)
 }
 
-
 trait Matrices {
-  self: Domains =>
+  self: Vectors with Domains =>
 
-  protected type Data[A, B, C] = Map[(A,B), C]
+  protected type Data[A, B, C] = Map[(A, B), C]
 
   protected trait Matrix[A, B, C] extends (((A, B)) => C) {
     def domains: (Domain[A], Domain[B])
@@ -36,15 +54,24 @@ trait Matrices {
     def get: ((A, B)) => C
 
     def apply(k: (A, B)) = get(k)
+
+    def entries: Iterable[((A, B), C)]
   }
 
-
-  protected def matrix[A, B, C : Numeric](ds: (Domain[A], Domain[B]), d: Data[A, B, C]): Matrix[A, B, C] = new Matrix[A, B, C] {
+  protected def matrix[A, B, C: Numeric](ds: (Domain[A], Domain[B]), d: Data[A, B, C]): Matrix[A, B, C] = new Matrix[A, B, C] {
     def domains = ds
 
     def data = d
 
     def get = data.getOrElse(_, implicitly[Numeric[C]].zero)
-  }
-}
 
+    def entries = d.toIterable
+  }
+
+  protected def filterValues[A, B, C: Numeric](mat: Matrix[A, B, C])(p: C => Boolean): Matrix[A, B, C] = matrix[A, B, C](
+    mat.domains, mat.entries filter(e => p(e._2)) toMap
+  )
+
+  protected def col[A, B, C: Numeric](b: B, mat:Matrix[A, B, C]): Vector[A, C] =
+    sparseVector[A, C](mat.domains._1, mat.entries.filter(_._1._2 == b).map(e => (e._1._1, e._2)).toMap)
+}

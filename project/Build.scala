@@ -1,5 +1,6 @@
 import sbt._
 import Keys._
+import com.typesafe.sbt.SbtScalariform._
 
 object Properties {
   lazy val appVer         = "0.1-SNAPSHOT"
@@ -24,9 +25,6 @@ object Resolvers {
   lazy val scalaToolsRepo = "sonatype-oss-public" at "https://oss.sonatype.org/content/groups/public/"
 }
 
-object ApplicationDependencies {
-  import Properties._
-}
 
 object TestDependencies {
   import Properties._
@@ -43,5 +41,7 @@ object ApplicationBuild extends Build {
     file("."),
     settings = buildSettings ++ Seq(resolvers += typesafeReleases) ++  
               Seq (libraryDependencies ++= Seq(scalaTest))
-  )
+  ) .settings(scalacOptions ++= Seq("-feature", "-target:jvm-1.7"))
+    .settings(defaultScalariformSettings: _*)
+    .settings(ScalariformKeys.preferences := CodeStyle.formattingPreferences)
 }

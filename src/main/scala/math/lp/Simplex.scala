@@ -1,24 +1,50 @@
 package math.lp
 
 trait Simplex {
-  self: Domains with Vectors with Matrices =>
+  self: Numerics with Domains with Vectors with Matrices =>
 
-  protected type Vec[A] = Vector[Int, A]
-  protected type Mat[A] = Matrix[Int, Int, A]
+  protected type Vec = Vector[Int, BigDecimal]
+  protected type Mat = Matrix[Int, Int, BigDecimal]
 
-  protected trait Dictionary[C] {
-    def b: Vec[C]
+  protected trait Dictionary {
+    def b: Vec
 
-    def z: Vec[C]
+    def z: Vec
 
-    def a: Mat[C]
+    def z0: BigDecimal
+
+    def a: Mat
   }
 
-  protected def dictionary[C : Numeric](bs: Vec[C], zs: Vec[C], as: Mat[C]): Dictionary[C] = new Dictionary[C] {
+  protected def dictionary(bs: Vec, zz: BigDecimal, zs: Vec, as: Mat): Dictionary = new Dictionary {
     def b = bs
 
     def z = zs
 
+    def z0 = zz
+
     def a = as
   }
+
+
+  protected def selectEnteringVar(d: Dictionary): Int  = selectEnteringVar(enteringVars(d))
+
+  private def enteringVars(d: Dictionary) = filterValues(d.z) { positive }
+
+  private def selectEnteringVar(v: Vec): Int = (v.entries map (_._1)).min
+
+  protected def leavingVars(entering: Int, d: Dictionary) =
+    map(filterValues(col(entering, d.a))  { negative }){ (index, c) => - (d.b(index) / c) }
+
+  protected def selectLeavingVar(vars: Vec) = vars.size match {
+    case 0 => None
+    case _ => vars.entries.toSeq.sortWith(sortLeavingVar).headOption map (_._1)
+  }
+
+  private def sortLeavingVar: ((Int, BigDecimal), (Int, BigDecimal)) => Boolean = {
+    case ((i1, v1), (i2, v2)) if v1 == v2 => i1 < i1
+    case ((i1, v1), (i2, v2)) => v1 < v2
+  }
+
+  protected def updatez0(entering: Int, leaving: Int, d: Dictionary) =  d.z0 - d.b(leaving) / d.a((leaving,entering))
 }
