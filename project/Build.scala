@@ -6,7 +6,7 @@ object Properties {
   lazy val appVer         = "0.1-SNAPSHOT"
   lazy val scalaVer       = "2.10.2"
   lazy val scalaTestVer   = "2.0.M6"
- }
+}
 
 object BuildSettings {
   import Properties._
@@ -24,7 +24,6 @@ object Resolvers {
   lazy val typesafeReleases = "Typesafe Repo" at "http://repo.typesafe.com/typesafe/releases/"
   lazy val scalaToolsRepo = "sonatype-oss-public" at "https://oss.sonatype.org/content/groups/public/"
 }
-
 
 object TestDependencies {
   import Properties._

@@ -26,25 +26,29 @@ trait Simplex {
     def a = as
   }
 
-
-  protected def selectEnteringVar(d: Dictionary): Int  = selectEnteringVar(enteringVars(d))
+  protected def selectEnteringVar(d: Dictionary): Int = selectEnteringVar(enteringVars(d))
 
   private def enteringVars(d: Dictionary) = filterValues(d.z) { positive }
 
   private def selectEnteringVar(v: Vec): Int = (v.entries map (_._1)).min
 
-  protected def leavingVars(entering: Int, d: Dictionary) =
-    map(filterValues(col(entering, d.a))  { negative }){ (index, c) => - (d.b(index) / c) }
+  private def enteringCoef(n: Int, d: Dictionary) = filterValues(col(n, d.a)) { negative }
 
-  protected def selectLeavingVar(vars: Vec) = vars.size match {
+  protected def leavingVars(entering: Int, d: Dictionary) =
+    map(enteringCoef(entering, d)) { (index, c) => -(d.b(index) / c) }
+
+  protected def selectLeavingVar(vars: Vec): Option[Int] = vars.size match {
     case 0 => None
     case _ => vars.entries.toSeq.sortWith(sortLeavingVar).headOption map (_._1)
   }
 
+  protected def selectLeavingVar(entering: Int, d: Dictionary): Option[Int] =
+    selectLeavingVar(leavingVars(entering, d))
+
   private def sortLeavingVar: ((Int, BigDecimal), (Int, BigDecimal)) => Boolean = {
     case ((i1, v1), (i2, v2)) if v1 == v2 => i1 < i1
-    case ((i1, v1), (i2, v2)) => v1 < v2
+    case ((i1, v1), (i2, v2))             => v1 < v2
   }
 
-  protected def updatez0(entering: Int, leaving: Int, d: Dictionary) =  d.z0 - d.b(leaving) / d.a((leaving,entering))
+  protected def updatez0(entering: Int, leaving: Int, d: Dictionary) = d.z0 - d.b(leaving) / d.a((leaving, entering))
 }

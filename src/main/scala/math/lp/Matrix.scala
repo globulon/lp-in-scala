@@ -40,7 +40,7 @@ trait Vectors {
     sparseVector(v.domain, v.entries.filter(e => p(e._1)).toMap)
 
   protected def map[A, C: Numeric, D: Numeric](v: Vector[A, C])(f: (A, C) => D): Vector[A, D] =
-    sparseVector(v.domain, v.entries.map {p => (p._1, f.tupled(p))} toMap)
+    sparseVector(v.domain, v.entries.map { p => (p._1, f.tupled(p)) } toMap)
 }
 
 trait Matrices {
@@ -69,9 +69,8 @@ trait Matrices {
   }
 
   protected def filterValues[A, B, C: Numeric](mat: Matrix[A, B, C])(p: C => Boolean): Matrix[A, B, C] = matrix[A, B, C](
-    mat.domains, mat.entries filter(e => p(e._2)) toMap
-  )
+    mat.domains, mat.entries filter (e => p(e._2)) toMap)
 
-  protected def col[A, B, C: Numeric](b: B, mat:Matrix[A, B, C]): Vector[A, C] =
+  protected def col[A, B, C: Numeric](b: B, mat: Matrix[A, B, C]): Vector[A, C] =
     sparseVector[A, C](mat.domains._1, mat.entries.filter(_._1._2 == b).map(e => (e._1._1, e._2)).toMap)
 }
