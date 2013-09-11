@@ -40,15 +40,14 @@ trait Simplex {
 
   private def selectLeavingVar(vars: Vec): Option[Int] = vars.size match {
     case 0 => None
-    case _ =>
-      vars.entries.toSeq.sortWith(sortLeavingVar).headOption map (_._1)
+    case _ => vars.entries.toSeq.sortWith(sortLeavingVar).headOption map (_._1)
   }
 
   protected def selectLeavingVar(entering: Int, d: Dictionary): Option[Int] =
     selectLeavingVar(leavingVars(entering, d))
 
   private def sortLeavingVar: ((Int, BigDecimal), (Int, BigDecimal)) => Boolean = {
-    case ((i1, v1), (i2, v2)) if v1 == v2 => i1 < i1
+    case ((i1, v1), (i2, v2)) if v1 == v2 => i1 < i2
     case ((i1, v1), (i2, v2))             => v1 < v2
   }
 

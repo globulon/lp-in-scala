@@ -3,9 +3,9 @@ package math.lp
 import scala.language.postfixOps
 
 trait Domains {
-  protected type Domain[A] = Seq[A]
+  protected type Domain[A] = Set[A]
 
-  protected def domain[A](as: Seq[A]): Domain[A] = as
+  protected def domain[A](as: Set[A]): Domain[A] = as
 }
 
 trait Vectors {
