@@ -3,9 +3,9 @@ package math.lp
 import scala.language.postfixOps
 
 trait Domains {
-  protected type Domain[A] = Set[A]
+  protected type Domain[A] = Seq[A]
 
-  protected def domain[A](as: Set[A]): Domain[A] = as
+  protected def domain[A](as: Seq[A]): Domain[A] = as
 }
 
 trait Vectors {
@@ -14,19 +14,17 @@ trait Vectors {
   protected trait Vector[A, C] extends ((A) => C) {
     def domain: Domain[A]
 
-    def get: (A) => C
-
-    def apply(a: A) = get(a)
-
     def entries: Iterable[(A, C)]
 
     def size: Int
+
+    def isZero: Boolean = size == 0
   }
 
   protected def sparseVector[A, C: Numeric](d: Domain[A], m: Map[A, C]): Vector[A, C] = new Vector[A, C] {
     def domain: Domain[A] = d
 
-    def get = m.getOrElse(_, implicitly[Numeric[C]].zero)
+    def apply(a: A) = m.getOrElse(a, implicitly[Numeric[C]].zero)
 
     def entries = m.toIterable
 
@@ -51,10 +49,6 @@ trait Matrices {
   protected trait Matrix[A, B, C] extends (((A, B)) => C) {
     def domains: (Domain[A], Domain[B])
 
-    def get: ((A, B)) => C
-
-    def apply(k: (A, B)) = get(k)
-
     def entries: Iterable[((A, B), C)]
   }
 
@@ -63,7 +57,7 @@ trait Matrices {
 
     def data = d
 
-    def get = data.getOrElse(_, implicitly[Numeric[C]].zero)
+    def apply(k: (A, B)) = data.getOrElse(k, implicitly[Numeric[C]].zero)
 
     def entries = d.toIterable
   }

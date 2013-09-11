@@ -3,7 +3,7 @@ package math.lp
 import fpatterns.State
 import scala._
 
-trait DictionaryParser {
+trait DictionaryInput {
   self: Simplex with Numerics with Matrices with Vectors with Domains =>
 
   protected def readDictionary = (for {
@@ -22,7 +22,7 @@ trait DictionaryParser {
   }
 
   private def getIndices = State[Stream[String], Domain[Int]] { s =>
-    (s.drop(1), s.take(1).head.split(" ").filterNot(_.isEmpty).map(_.toInt).toSet)
+    (s.drop(1), s.take(1).head.split(" ").filterNot(_.isEmpty).map(_.toInt))
   }
 
   private def getB(m: Domain[Int]) = State[Stream[String], Vec] { s =>
@@ -31,13 +31,11 @@ trait DictionaryParser {
   }
 
   private def getA(m: Domain[Int], n: Domain[Int]) = State[Stream[String], Data[Int, Int, BigDecimal]] { s =>
-    val ms = m.toSeq.sorted
-    val ns = n.toSeq.sorted
-    val (_, map) = s.take(ms.size).foldLeft((0, Map.empty[(Int, Int), BigDecimal])) { (current, coeffs) =>
-      val keys = ns map (j => (ms(current._1), j))
+    val (_, map) = s.take(m.size).foldLeft((0, Map.empty[(Int, Int), BigDecimal])) { (current, coeffs) =>
+      val keys = n map (j => (m(current._1), j))
       (current._1 + 1, current._2 ++ keys.zip(coeffs.split(" ").filterNot(_.isEmpty).map(BigDecimal(_))).toMap)
     }
-    (s.drop(ms.size), map)
+    (s.drop(m.size), map)
   }
 
   private def getZ0 = State[Stream[String], BigDecimal] { s =>
@@ -46,7 +44,28 @@ trait DictionaryParser {
 
   private def getCn(n: Domain[Int]) = State[Stream[String], Vec] { s =>
     val cns = s.head.split(" ").tail.toSeq.map(_.trim).filterNot(_.isEmpty).map(BigDecimal(_))
-    val v = sparseVector(n, n.toSeq.sorted.zip(cns).toMap)
+    val v = sparseVector(n, n.zip(cns).toMap)
     (s, v)
   }
+}
+
+trait DictionaryOutput {
+  self: Simplex with Numerics with Matrices with Vectors with Domains =>
+  protected type Output = Either[String, (Int, Int, BigDecimal)]
+
+  protected def format: (Output) => String = {
+    case Left(s) => s
+    case Right(t) =>  s"${t._1}\n${t._2}\n${t._3.toDouble}"
+  }
+
+  protected def makeOutput(d: Dictionary) = (for {
+    e <- selectEnteringVar(d)
+    l <- selectLeavingVar(e, d)
+  } yield (e, l, nextz0(e, l, d))).toRight("UNBOUNDED")
+}
+
+
+trait DictionaryIO extends DictionaryInput with DictionaryOutput {
+  self: Simplex with Numerics with Matrices with Vectors with Domains =>
+
 }
