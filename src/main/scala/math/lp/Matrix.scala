@@ -49,6 +49,10 @@ trait Matrices {
   protected trait Matrix[A, B, C] extends (((A, B)) => C) {
     def domains: (Domain[A], Domain[B])
 
+    def Row = domains._1
+
+    def Col = domains._2
+
     def entries: Iterable[((A, B), C)]
   }
 
@@ -66,5 +70,8 @@ trait Matrices {
     mat.domains, mat.entries filter (e => p(e._2)) toMap)
 
   protected def col[A, B, C: Numeric](b: B, mat: Matrix[A, B, C]): Vector[A, C] =
-    sparseVector[A, C](mat.domains._1, mat.entries.filter(_._1._2 == b).map(e => (e._1._1, e._2)).toMap)
+    sparseVector[A, C](mat.Row, mat.entries.filter(_._1._2 == b).map(e => (e._1._1, e._2)).toMap)
+
+  protected def row[A, B, C: Numeric](a: A, mat: Matrix[A, B, C]): Vector[B, C] =
+    sparseVector(mat.Col, mat.entries.filter(_._1._1 == a).map(e => (e._1._2, e._2)).toMap)
 }
