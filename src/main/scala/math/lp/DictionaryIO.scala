@@ -54,8 +54,8 @@ trait DictionaryOutput {
   protected type Output = Either[String, (Int, Int, BigDecimal)]
 
   protected def format: (Output) => String = {
-    case Left(s) => s
-    case Right(t) =>  s"${t._1}\n${t._2}\n${t._3.toDouble}"
+    case Left(s)  => s
+    case Right(t) => s"${t._1}\n${t._2}\n${t._3.toDouble}"
   }
 
   protected def makeOutput(d: Dictionary) = (for {
@@ -63,7 +63,6 @@ trait DictionaryOutput {
     l <- selectLeavingVar(e, d)
   } yield (e, l, nextz0(e, l, d))).toRight("UNBOUNDED")
 }
-
 
 trait DictionaryIO extends DictionaryInput with DictionaryOutput {
   self: Simplex with Numerics with Matrices with Vectors with Domains =>

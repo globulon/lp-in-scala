@@ -46,7 +46,7 @@ trait Simplex {
   }
 
   protected def selectLeavingVar(entering: Int, d: Dictionary): Option[Int] = {
-//    println(selectLeavingVar(leavingVars(entering, d)))
+    //    println(selectLeavingVar(leavingVars(entering, d)))
     selectLeavingVar(leavingVars(entering, d))
   }
 
@@ -55,10 +55,10 @@ trait Simplex {
     case ((i1, v1), (i2, v2))             => v1 < v2
   }
 
-  private def nextb(entering: Int, leaving: Int, d: Dictionary): Vec =  {
+  private def nextb(entering: Int, leaving: Int, d: Dictionary): Vec = {
     val newRow = d.b.domain - leaving
     val newEntries = newRow.foldLeft(Map.empty[Int, BigDecimal]) { (bs, row) =>
-      bs + (row -> (d.b(row) - d.a(row, entering) * d.b(leaving) /d.a(leaving, entering)))
+      bs + (row -> (d.b(row) - d.a(row, entering) * d.b(leaving) / d.a(leaving, entering)))
     } + (entering -> -d.b(leaving) / d.a(leaving, entering))
     sparseVector(newRow + entering, newEntries)
   }
@@ -74,15 +74,15 @@ trait Simplex {
   private def substitute(entering: Int, leaving: Int, newCol: Domain[Int], d: Dictionary) = (mat: Map[(Int, Int), BigDecimal], r: Int) =>
     newCol.foldLeft(mat) { (acc, c) =>
       acc + ((r, c) -> (d.a(r, c) - d.a((r, entering)) * d.a((leaving, c)) / d.a((leaving, entering))))
-    } + ((r, leaving) ->  d.a((r, entering))/ d.a((leaving, entering)))
+    } + ((r, leaving) -> d.a((r, entering)) / d.a((leaving, entering)))
 
   private def nexta(entering: Int, leaving: Int, d: Dictionary): Mat = {
     val newCol = d.a.Col - entering
     val newRow = d.a.Row - leaving
-    val newEntries = newRow.foldLeft(Map.empty[(Int,Int), BigDecimal]) {  substitute(entering, leaving, newCol, d) }
+    val newEntries = newRow.foldLeft(Map.empty[(Int, Int), BigDecimal]) { substitute(entering, leaving, newCol, d) }
     val enteringRow = newCol.foldLeft(Map.empty[(Int, Int), BigDecimal]) { (map, col) =>
-      map + ((entering, col) ->  -d.a((leaving,col))/d.a((leaving, entering)))
-    } + ((entering, leaving) ->  1 / d.a((leaving, entering)))
+      map + ((entering, col) -> -d.a((leaving, col)) / d.a((leaving, entering)))
+    } + ((entering, leaving) -> 1 / d.a((leaving, entering)))
 
     matrix((newRow + entering, newCol + leaving), newEntries ++ enteringRow)
   }
@@ -98,30 +98,30 @@ trait Simplex {
   protected object Unbounded extends PivotStatus
 
   private def pivot(leaving: Int, entering: Int, d: Dictionary): PivotStatus =
-    Cont(dictionary(nextb(entering,leaving, d), nextz0(entering,leaving, d), nextz(entering, leaving, d), nexta(entering, leaving, d)))
+    Cont(dictionary(nextb(entering, leaving, d), nextz0(entering, leaving, d), nextz(entering, leaving, d), nexta(entering, leaving, d)))
 
   private def pivot(d: Dictionary, entering: Int): PivotStatus = {
     selectLeavingVar(entering, d) match {
       case Some(leaving) =>
-//        println(s"leaving $leaving")
+        //        println(s"leaving $leaving")
         pivot(leaving, entering, d)
       case None =>
-//        println(s"unbounded")
+        //        println(s"unbounded")
         Unbounded
     }
   }
 
   private def pivot(d: Dictionary): PivotStatus = selectEnteringVar(d) match {
     case Some(entering) =>
-//      println(s"entering $entering")
+      //      println(s"entering $entering")
       pivot(d, entering)
     case None => Done(d.z0)
   }
 
   @tailrec
-  private def loopPivot(s: Step, ps: PivotStatus): (Step, PivotStatus) =  ps match {
+  private def loopPivot(s: Step, ps: PivotStatus): (Step, PivotStatus) = ps match {
     case Cont(d) => loopPivot(s + 1, pivot(d))
-    case r => (s, r)
+    case r       => (s, r)
   }
 
   protected def loopPivot(d: Dictionary): (Step, PivotStatus) = loopPivot(-1, Cont(d))
