@@ -93,7 +93,7 @@ trait Simplex {
   protected type Cost = BigDecimal
 
   sealed trait PivotStatus
-  protected case class Done(cost: Cost) extends PivotStatus
+  protected case class Done(d: Dictionary) extends PivotStatus
   protected case class Cont(d: Dictionary) extends PivotStatus
   protected object Unbounded extends PivotStatus
 
@@ -102,20 +102,15 @@ trait Simplex {
 
   private def pivot(d: Dictionary, entering: Int): PivotStatus = {
     selectLeavingVar(entering, d) match {
-      case Some(leaving) =>
-        //        println(s"leaving $leaving")
-        pivot(leaving, entering, d)
+      case Some(leaving) => pivot(leaving, entering, d)
       case None =>
-        //        println(s"unbounded")
         Unbounded
     }
   }
 
   private def pivot(d: Dictionary): PivotStatus = selectEnteringVar(d) match {
-    case Some(entering) =>
-      //      println(s"entering $entering")
-      pivot(d, entering)
-    case None => Done(d.z0)
+    case Some(entering) => pivot(d, entering)
+    case None => Done(d)
   }
 
   @tailrec
