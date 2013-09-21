@@ -5,7 +5,7 @@ import com.typesafe.sbt.SbtScalariform._
 object Properties {
   lazy val appVer         = "0.1-SNAPSHOT"
   lazy val scalaVer       = "2.10.2"
-  lazy val scalaTestVer   = "2.0.M6"
+  lazy val scalaTestVer   = "2.0.M8"
 }
 
 object BuildSettings {

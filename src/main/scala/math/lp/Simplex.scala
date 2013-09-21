@@ -110,7 +110,7 @@ trait Simplex {
 
   private def pivot(d: Dictionary): PivotStatus = selectEnteringVar(d) match {
     case Some(entering) => pivot(d, entering)
-    case None => Done(d)
+    case None           => Done(d)
   }
 
   @tailrec
