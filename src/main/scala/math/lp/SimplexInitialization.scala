@@ -26,7 +26,7 @@ trait SimplexInitialization {
   } yield dictionary(bs, z0, zs, as)
 
   private def readAuxiliaryLeaving = readB map {
-    _.entries.foldLeft((Int.MaxValue, BigDecimal(0))) { (found, cur) =>
+    _.data.foldLeft((Int.MaxValue, BigDecimal(0))) { (found, cur) =>
       if (cur._2 < found._2) cur else found
     }._1
   }
@@ -35,4 +35,17 @@ trait SimplexInitialization {
     pivot(readAuxiliaryLeaving(d), 0, makeAuxiliary(d)) match {
       case Cont(aux) => loopPivot(aux)
     }
+
+  protected def mergeAuxiliary(aux: Dictionary, original: Dictionary): Dictionary = {
+    val z = base(aux).foldLeft(readData(readZ(original))) { (z, cur) =>
+        readData(row(cur, readA(aux))).foldLeft(z - cur) { (zz, pair) =>
+          zz + (pair._1 -> (zz(pair._1) + z(cur) * pair._2))
+        }
+    }
+    val z0 = base(aux).foldLeft(readZ0(original)) { (z, curr) =>
+      z + readData(readB(aux))(curr) * readData(readZ(original))(curr)
+    }
+
+    dictionary(readB(aux), z0, sparseVector(base(aux), z), readA(aux))
+  }
 }

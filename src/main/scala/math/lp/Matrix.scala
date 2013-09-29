@@ -1,6 +1,7 @@
 package math.lp
 
 import scala.language.postfixOps
+import fpatterns.Reader
 
 trait Domains {
   protected type Domain[A] = Set[A]
@@ -14,7 +15,7 @@ trait Vectors {
   protected trait Vector[A, C] extends ((A) => C) {
     def domain: Domain[A]
 
-    def entries: Iterable[(A, C)]
+    def data: Map[A, C]
 
     def size: Int
 
@@ -26,22 +27,27 @@ trait Vectors {
 
     def apply(a: A) = m.getOrElse(a, implicitly[Numeric[C]].zero)
 
-    def entries = m.toIterable
+    def data = m
 
     def size = m.count(p => implicitly[Numeric[C]].zero != p._2)
   }
 
   protected def filterValues[A, C: Numeric](v: Vector[A, C])(p: C => Boolean): Vector[A, C] =
-    sparseVector(v.domain, v.entries.filter(e => p(e._2)).toMap)
+    sparseVector(v.domain, v.data.filter(e => p(e._2)))
 
   protected def filterKeys[A, C: Numeric](v: Vector[A, C])(p: A => Boolean): Vector[A, C] =
-    sparseVector(v.domain, v.entries.filter(e => p(e._1)).toMap)
+    sparseVector(v.domain, v.data.filter(e => p(e._1)))
 
   protected def map[A, C: Numeric, D: Numeric](v: Vector[A, C])(f: (A, C) => D): Vector[A, D] =
-    sparseVector(v.domain, v.entries.map { p => (p._1, f.tupled(p)) } toMap)
+    sparseVector(v.domain, v.data.map { p => (p._1, f.tupled(p)) })
 
   protected def findValue[A, C: Numeric](v: Vector[A, C])(p: C => Boolean): Option[(A, C)] =
-    v.entries find { pair => p(pair._2) }
+    v.data find { pair => p(pair._2) }
+
+  protected def modifyVec[A, C : Numeric](v: Vector[A, C], a: A)(f: C => C): Vector[A, C] =
+    sparseVector(v.domain, v.data + (a -> f(v(a))))
+
+  protected def readData[A, C] = Reader[Vector[A, C], Map[A, C]] {_.data}
 }
 
 trait Matrices {

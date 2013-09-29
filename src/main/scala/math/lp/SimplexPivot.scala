@@ -7,25 +7,27 @@ trait SimplexPivot {
   protected type Step = Int
 
   sealed trait PivotStatus
-  protected case class Done(d: Dictionary) extends PivotStatus
   protected case class Cont(d: Dictionary) extends PivotStatus
-  protected object Unbounded extends PivotStatus
+  sealed trait PivotExecution extends PivotStatus
+  protected case class Done(d: Dictionary) extends PivotExecution
+  sealed trait PivotError extends PivotExecution
+  protected object Unbounded extends PivotError
 
   protected def selectEnteringVar(d: Dictionary): Option[Int] = selectEnteringVar(enteringVars(d))
 
   private def enteringVars(d: Dictionary) = filterValues(d.z) { positive }
 
   private def selectEnteringVar(v: Vec): Option[Int] =
-    if (v.isZero) None else Some((v.entries map (_._1)).min)
+    if (v.isZero) None else Some((v.data map (_._1)).min)
 
   private def enteringCoef(n: Int, d: Dictionary) = filterValues(col(n, d.a)) { negative }
 
   protected def leavingVars(entering: Int, d: Dictionary) =
     map(enteringCoef(entering, d)) { (index, c) => -(d.b(index) / c) }
 
-  private def selectLeavingVar(vars: Vec): Option[Int] = vars.entries.size match {
+  private def selectLeavingVar(vars: Vec): Option[Int] = vars.data.size match {
     case 0 => None
-    case _ => vars.entries.toSeq.sortWith(sortLeavingVar).headOption map (_._1)
+    case _ => vars.data.toSeq.sortWith(sortLeavingVar).headOption map (_._1)
   }
 
   protected def selectLeavingVar(entering: Int, d: Dictionary): Option[Int] = {
@@ -89,10 +91,11 @@ trait SimplexPivot {
   }
 
   @tailrec
-  private def loopPivot(s: Step, ps: PivotStatus): (Step, PivotStatus) = ps match {
-    case Cont(d) => loopPivot(s + 1, pivot(d))
-    case r       => (s, r)
+  private def loopPivot(s: Step, ps: PivotStatus): (Step, PivotExecution) = ps match {
+    case Cont(d)   => loopPivot(s + 1, pivot(d))
+    case Unbounded => (s, Unbounded)
+    case Done(d)   => (s, Done(d))
   }
 
-  protected def loopPivot(d: Dictionary): (Step, PivotStatus) = loopPivot(-1, Cont(d))
+  protected def loopPivot(d: Dictionary): (Step, PivotExecution) = loopPivot(-1, Cont(d))
 }

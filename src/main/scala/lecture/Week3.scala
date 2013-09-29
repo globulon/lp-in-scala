@@ -17,7 +17,7 @@ object Week3 extends SimplexPivot with SimplexDomain with Numerics with Matrices
     loopPivot(D) match {
       case (steps, Done(r)) =>
         println(r.z0)
-        println(r.b.entries.toList)
+        println(r.b.data.toList)
       case other => println(other)
     }
 
