@@ -131,7 +131,7 @@ final class PivotSpec extends WordSpec
         r map (_.toDouble) should be(Some(0.7205882352941176))
       }
     }
- }
+  }
 
   private def getPivotInfo[A](name: String)(f: (Option[Int], Option[Int], Option[BigDecimal]) => A) =
     closing(Source.fromFile(location(name))) { source =>

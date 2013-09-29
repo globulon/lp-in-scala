@@ -37,4 +37,6 @@ trait SimplexDomain {
   protected def readZ = Reader[Dictionary, Vec] { _.z }
 
   protected def readB = Reader[Dictionary, Vec] { _.b }
+
+  protected def readZ0 = Reader[Dictionary, BigDecimal] { _.z0 }
 }

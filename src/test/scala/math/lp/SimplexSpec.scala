@@ -48,7 +48,7 @@ final class SimplexSpec extends WordSpec
       closing(Source.fromFile(location("dict6"))) { source =>
         val ls = source.getLines().toStream
         val (_, r) = loopPivot(readDictionary(ls))
-        r should be (Unbounded)
+        r should be(Unbounded)
       }
     }
 

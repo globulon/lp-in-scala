@@ -4,6 +4,12 @@ import scala.annotation.tailrec
 
 trait SimplexPivot {
   self: SimplexDomain with Numerics with Domains with Vectors with Matrices =>
+  protected type Step = Int
+
+  sealed trait PivotStatus
+  protected case class Done(d: Dictionary) extends PivotStatus
+  protected case class Cont(d: Dictionary) extends PivotStatus
+  protected object Unbounded extends PivotStatus
 
   protected def selectEnteringVar(d: Dictionary): Option[Int] = selectEnteringVar(enteringVars(d))
 
@@ -66,13 +72,6 @@ trait SimplexPivot {
 
   protected def nextz0(entering: Int, leaving: Int, d: Dictionary) = d.z0 - d.b(leaving) * d.z(entering) / d.a((leaving, entering))
 
-  protected type Step = Int
-
-  sealed trait PivotStatus
-  protected case class Done(d: Dictionary) extends PivotStatus
-  protected case class Cont(d: Dictionary) extends PivotStatus
-  protected object Unbounded extends PivotStatus
-
   protected def pivot(leaving: Int, entering: Int, d: Dictionary): PivotStatus = {
     //    println(s"entering: $entering - leaving: $leaving")
     Cont(dictionary(nextb(entering, leaving, d), nextz0(entering, leaving, d), nextz(entering, leaving, d), nexta(entering, leaving, d)))
@@ -81,7 +80,7 @@ trait SimplexPivot {
   private def pivot(d: Dictionary, entering: Int): PivotStatus =
     selectLeavingVar(entering, d) match {
       case Some(leaving) => pivot(leaving, entering, d)
-      case None => Unbounded
+      case None          => Unbounded
     }
 
   private def pivot(d: Dictionary): PivotStatus = selectEnteringVar(d) match {

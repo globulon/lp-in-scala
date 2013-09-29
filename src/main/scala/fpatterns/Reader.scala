@@ -1,6 +1,6 @@
 package fpatterns
 
-trait Reader[Ctx, A] extends ((Ctx) => A){
+trait Reader[Ctx, A] extends ((Ctx) => A) {
   def run: Ctx => A
 
   def apply(ctx: Ctx) = run(ctx)

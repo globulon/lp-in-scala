@@ -39,6 +39,9 @@ trait Vectors {
 
   protected def map[A, C: Numeric, D: Numeric](v: Vector[A, C])(f: (A, C) => D): Vector[A, D] =
     sparseVector(v.domain, v.entries.map { p => (p._1, f.tupled(p)) } toMap)
+
+  protected def findValue[A, C: Numeric](v: Vector[A, C])(p: C => Boolean): Option[(A, C)] =
+    v.entries find { pair => p(pair._2) }
 }
 
 trait Matrices {
