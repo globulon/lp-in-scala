@@ -29,15 +29,15 @@ trait Simplex {
     def a = as
   }
 
-  protected def base = dictA map { _.domains._1 }
+  protected def base = readA map { _.domains._1 }
 
-  protected def nonBasic = dictA map { _.domains._1 }
+  protected def nonBasic = readA map { _.domains._1 }
 
-  protected def dictA = Reader[Dictionary, Mat] { _.a }
+  protected def readA = Reader[Dictionary, Mat] { _.a }
 
-  protected def dictZ = Reader[Dictionary, Vec] { _.z }
+  protected def readZ = Reader[Dictionary, Vec] { _.z }
 
-  protected def dictB = Reader[Dictionary, Vec] { _.b }
+  protected def readB = Reader[Dictionary, Vec] { _.b }
 
   protected def selectEnteringVar(d: Dictionary): Option[Int] = selectEnteringVar(enteringVars(d))
 
@@ -109,17 +109,15 @@ trait Simplex {
   protected object Unbounded extends PivotStatus
 
   private def pivot(leaving: Int, entering: Int, d: Dictionary): PivotStatus = {
-    println(s"entering: $entering - leaving: $leaving")
+//    println(s"entering: $entering - leaving: $leaving")
     Cont(dictionary(nextb(entering, leaving, d), nextz0(entering, leaving, d), nextz(entering, leaving, d), nexta(entering, leaving, d)))
   }
 
-  private def pivot(d: Dictionary, entering: Int): PivotStatus = {
+  private def pivot(d: Dictionary, entering: Int): PivotStatus =
     selectLeavingVar(entering, d) match {
       case Some(leaving) => pivot(leaving, entering, d)
-      case None =>
-        Unbounded
+      case None => Unbounded
     }
-  }
 
   private def pivot(d: Dictionary): PivotStatus = selectEnteringVar(d) match {
     case Some(entering) => pivot(d, entering)
@@ -140,7 +138,7 @@ trait Simplex {
 
   private def readAuxiliaryZs = nonBasic map { b => sparseVector[Int, BigDecimal](b + 0, Map(0 -> -1)) }
 
-  private def readAuxiliaryA = dictA map { a =>
+  private def readAuxiliaryA = readA map { a =>
     val entries: Data[Int,Int, BigDecimal] = a.domains._1.foldLeft(a.entries.toList) { (acc, cur) =>
       ((cur, 0) -> BigDecimal(1))::acc
     }.toMap
@@ -154,7 +152,7 @@ trait Simplex {
     as <- readAuxiliaryA
   } yield dictionary(bs, z0 ,zs, as)
 
-  private def readAuxiliaryLeaving = dictB map {
+  private def readAuxiliaryLeaving = readB map {
     _.entries.foldLeft((Int.MaxValue, BigDecimal(0))) { (found, cur) =>
       if (cur._2 < found._2) cur else found
     }._1

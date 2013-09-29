@@ -81,12 +81,11 @@ final class AuxiliarySpec extends WordSpec
   }
 
   "Auxiliary serial 2" must {
-//    "solve input dictionary 1" in {
-//      solveAuxiliaryDict("assignmentTests", "part1.dict") { (steps, d) =>
-//        steps should be(1)
-//        d.z0.toDouble should be(0)
-//      }
-//    }
+    "solve input dictionary 1" in {
+      checkUnbounded("assignmentTests", "part1.dict") { steps =>
+        steps should be(3)
+      }
+    }
 
     "solve input dictionary 2" in {
       solveAuxiliaryDict("assignmentTests", "part2.dict") { (steps, d) =>
@@ -102,19 +101,17 @@ final class AuxiliarySpec extends WordSpec
       }
     }
 
-//    "solve input dictionary 4" in {
-//      solveAuxiliaryDict("assignmentTests", "part4.dict") { (steps, d) =>
-//        steps should be(28)
-//        d.z0.toDouble should be(-0.7960686917611596 +- 0.0001)
-//      }
-//    }
+    "solve input dictionary 4" in {
+      checkUnbounded("assignmentTests", "part4.dict") { steps =>
+        steps should be(5)
+      }
+    }
 
-//    "solve input dictionary 5" in {
-//      solveAuxiliaryDict("assignmentTests", "part5.dict") { (steps, d) =>
-//        steps should be(28)
-//        d.z0.toDouble should be(-0.7960686917611596 +- 0.0001)
-//      }
-//    }
+    "solve input dictionary 5" in {
+      checkUnbounded("assignmentTests", "part5.dict") {  steps =>
+        steps should be(39)
+      }
+    }
 
     "solve input dictionary 6" in {
       solveAuxiliaryDict("assignmentTests", "part6.dict") { (steps, d) =>
@@ -129,11 +126,18 @@ final class AuxiliarySpec extends WordSpec
       val ls = source.getLines().toStream
       solveAuxiliary(readDictionary(ls)) match {
         case (steps, Done(d)) => f(steps, d)
-        case r                =>
-          println(r)
-          fail("Unexpected result pivoting")
+        case r                => fail("Unexpected result pivoting")
       }
     }
 
-  private def location(prefix: String, name: String) = Paths.get("src", "test", "resources", "week4", prefix, name).toUri
+  private def checkUnbounded[A](prefix: String, name: String)(f : Int => A) =
+    closing(Source.fromFile(location(prefix, name))) { source =>
+      val ls = source.getLines().toStream
+      solveAuxiliary(readDictionary(ls)) match {
+        case (steps, Unbounded) => f(steps)
+        case _ => fail("expected unbounded dictionary")
+      }
+    }
+
+    private def location(prefix: String, name: String) = Paths.get("src", "test", "resources", "week4", prefix, name).toUri
 }
