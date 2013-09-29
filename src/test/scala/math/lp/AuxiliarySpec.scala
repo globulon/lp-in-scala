@@ -122,21 +122,21 @@ final class AuxiliarySpec extends WordSpec
   }
 
   private def solveAuxiliaryDict[A](prefix: String, name: String)(f: (Int, Dictionary) => A) =
-    closing(Source.fromFile(location(prefix, name))) { source =>
-      val ls = source.getLines().toStream
-      solveAuxiliary(readDictionary(ls)) match {
-        case (steps, Done(d)) => f(steps, d)
-        case r                => fail("Unexpected result pivoting")
-      }
+    pivoting(prefix, name) {
+      case (steps, Done(d)) => f(steps, d)
+      case r                => fail("Unexpected result pivoting")
     }
 
   private def checkUnbounded[A](prefix: String, name: String)(f : Int => A) =
+    pivoting(prefix, name) {
+      case (steps, Unbounded) => f(steps)
+      case _ => fail("expected unbounded dictionary")
+    }
+
+  private def pivoting[A](prefix: String, name: String)(f: (Int, PivotStatus) => A)=
     closing(Source.fromFile(location(prefix, name))) { source =>
       val ls = source.getLines().toStream
-      solveAuxiliary(readDictionary(ls)) match {
-        case (steps, Unbounded) => f(steps)
-        case _ => fail("expected unbounded dictionary")
-      }
+      f.tupled(solveAuxiliary(readDictionary(ls)))
     }
 
     private def location(prefix: String, name: String) = Paths.get("src", "test", "resources", "week4", prefix, name).toUri
