@@ -1,6 +1,7 @@
 package math.lp
 
 import scala.annotation.tailrec
+import fpatterns._
 
 trait Simplex {
   self: Numerics with Domains with Vectors with Matrices =>
@@ -27,6 +28,16 @@ trait Simplex {
 
     def a = as
   }
+
+  protected def base = dictA map { _.domains._1 }
+
+  protected def nonBasic = dictA map { _.domains._1 }
+
+  protected def dictA = Reader[Dictionary, Mat] { _.a }
+
+  protected def dictZ = Reader[Dictionary, Vec] { _.z }
+
+  protected def dictB = Reader[Dictionary, Vec] { _.b }
 
   protected def selectEnteringVar(d: Dictionary): Option[Int] = selectEnteringVar(enteringVars(d))
 
@@ -97,8 +108,10 @@ trait Simplex {
   protected case class Cont(d: Dictionary) extends PivotStatus
   protected object Unbounded extends PivotStatus
 
-  private def pivot(leaving: Int, entering: Int, d: Dictionary): PivotStatus =
+  private def pivot(leaving: Int, entering: Int, d: Dictionary): PivotStatus = {
+    println(s"entering: $entering - leaving: $leaving")
     Cont(dictionary(nextb(entering, leaving, d), nextz0(entering, leaving, d), nextz(entering, leaving, d), nexta(entering, leaving, d)))
+  }
 
   private def pivot(d: Dictionary, entering: Int): PivotStatus = {
     selectLeavingVar(entering, d) match {
@@ -120,4 +133,35 @@ trait Simplex {
   }
 
   protected def loopPivot(d: Dictionary): (Step, PivotStatus) = loopPivot(-1, Cont(d))
+
+  private def readAuxiliaryB = Reader[Dictionary, Vec] { _.b }
+
+  private def readAuxiliaryZ0 = Reader[Dictionary, BigDecimal] { _ => 0}
+
+  private def readAuxiliaryZs = nonBasic map { b => sparseVector[Int, BigDecimal](b + 0, Map(0 -> -1)) }
+
+  private def readAuxiliaryA = dictA map { a =>
+    val entries: Data[Int,Int, BigDecimal] = a.domains._1.foldLeft(a.entries.toList) { (acc, cur) =>
+      ((cur, 0) -> BigDecimal(1))::acc
+    }.toMap
+    matrix[Int,Int, BigDecimal]((a.domains._1, a.domains._2 + 0), entries.toMap)
+  }
+
+  private def makeAuxiliary = for {
+    bs <- readAuxiliaryB
+    z0 <- readAuxiliaryZ0
+    zs <- readAuxiliaryZs
+    as <- readAuxiliaryA
+  } yield dictionary(bs, z0 ,zs, as)
+
+  private def readAuxiliaryLeaving = dictB map {
+    _.entries.foldLeft((Int.MaxValue, BigDecimal(0))) { (found, cur) =>
+      if (cur._2 < found._2) cur else found
+    }._1
+  }
+
+  protected def solveAuxiliary(d: Dictionary) =
+    pivot(readAuxiliaryLeaving(d), 0, makeAuxiliary(d)) match {
+      case Cont(aux) => loopPivot(aux)
+    }
 }
