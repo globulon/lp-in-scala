@@ -6,7 +6,7 @@ import fpatterns._
 import java.nio.file.Paths
 
 final class AuxiliarySpec extends WordSpec
-    with Matchers with DictionaryIO with Simplex with Numerics with Matrices with Vectors with Domains {
+    with Matchers with DictionaryIO with SimplexInitialization with SimplexPivot with SimplexDomain with Numerics with Matrices with Vectors with Domains {
 
   "Auxiliary serial 1" must {
     "solve input dictionary 1" in {

@@ -4,7 +4,7 @@ import fpatterns.State
 import scala._
 
 trait DictionaryInput {
-  self: Simplex with Numerics with Matrices with Vectors with Domains =>
+  self: SimplexDomain with Numerics with Matrices with Vectors with Domains =>
 
   protected def readDictionary = (for {
     pair <- readRowCol
@@ -50,21 +50,16 @@ trait DictionaryInput {
 }
 
 trait DictionaryOutput {
-  self: Simplex with Numerics with Matrices with Vectors with Domains =>
+  self: SimplexDomain with Numerics with Matrices with Vectors with Domains =>
   protected type Output = Either[String, (Int, Int, BigDecimal)]
 
   protected def format: (Output) => String = {
     case Left(s)  => s
     case Right(t) => s"${t._1}\n${t._2}\n${t._3.toDouble}"
   }
-
-  protected def makeOutput(d: Dictionary) = (for {
-    e <- selectEnteringVar(d)
-    l <- selectLeavingVar(e, d)
-  } yield (e, l, nextz0(e, l, d))).toRight("UNBOUNDED")
 }
 
 trait DictionaryIO extends DictionaryInput with DictionaryOutput {
-  self: Simplex with Numerics with Matrices with Vectors with Domains =>
+  self: SimplexDomain with Numerics with Matrices with Vectors with Domains =>
 
 }

@@ -6,7 +6,7 @@ import fpatterns._
 import java.nio.file.Paths
 
 final class PivotSpec extends WordSpec
-    with Matchers with Inspectors with DictionaryIO with Simplex with Numerics with Matrices with Vectors with Domains {
+    with Matchers with Inspectors with DictionaryIO with SimplexPivot with SimplexDomain with Numerics with Matrices with Vectors with Domains {
   "Pivot serial 1" must {
     "solve input dictionary 1" in {
       getPivotInfo("dict1") { (e, l, r) =>

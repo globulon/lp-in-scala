@@ -1,43 +1,9 @@
 package math.lp
 
 import scala.annotation.tailrec
-import fpatterns._
 
-trait Simplex {
-  self: Numerics with Domains with Vectors with Matrices =>
-
-  protected type Vec = Vector[Int, BigDecimal]
-  protected type Mat = Matrix[Int, Int, BigDecimal]
-
-  protected trait Dictionary {
-    def b: Vec
-
-    def z: Vec
-
-    def z0: BigDecimal
-
-    def a: Mat
-  }
-
-  protected def dictionary(bs: Vec, zz: BigDecimal, zs: Vec, as: Mat): Dictionary = new Dictionary {
-    def b = bs
-
-    def z = zs
-
-    def z0 = zz
-
-    def a = as
-  }
-
-  protected def base = readA map { _.domains._1 }
-
-  protected def nonBasic = readA map { _.domains._1 }
-
-  protected def readA = Reader[Dictionary, Mat] { _.a }
-
-  protected def readZ = Reader[Dictionary, Vec] { _.z }
-
-  protected def readB = Reader[Dictionary, Vec] { _.b }
+trait SimplexPivot {
+  self: SimplexDomain with Numerics with Domains with Vectors with Matrices =>
 
   protected def selectEnteringVar(d: Dictionary): Option[Int] = selectEnteringVar(enteringVars(d))
 
@@ -101,15 +67,14 @@ trait Simplex {
   protected def nextz0(entering: Int, leaving: Int, d: Dictionary) = d.z0 - d.b(leaving) * d.z(entering) / d.a((leaving, entering))
 
   protected type Step = Int
-  protected type Cost = BigDecimal
 
   sealed trait PivotStatus
   protected case class Done(d: Dictionary) extends PivotStatus
   protected case class Cont(d: Dictionary) extends PivotStatus
   protected object Unbounded extends PivotStatus
 
-  private def pivot(leaving: Int, entering: Int, d: Dictionary): PivotStatus = {
-//    println(s"entering: $entering - leaving: $leaving")
+  protected def pivot(leaving: Int, entering: Int, d: Dictionary): PivotStatus = {
+    //    println(s"entering: $entering - leaving: $leaving")
     Cont(dictionary(nextb(entering, leaving, d), nextz0(entering, leaving, d), nextz(entering, leaving, d), nexta(entering, leaving, d)))
   }
 
@@ -131,35 +96,4 @@ trait Simplex {
   }
 
   protected def loopPivot(d: Dictionary): (Step, PivotStatus) = loopPivot(-1, Cont(d))
-
-  private def readAuxiliaryB = Reader[Dictionary, Vec] { _.b }
-
-  private def readAuxiliaryZ0 = Reader[Dictionary, BigDecimal] { _ => 0}
-
-  private def readAuxiliaryZs = nonBasic map { b => sparseVector[Int, BigDecimal](b + 0, Map(0 -> -1)) }
-
-  private def readAuxiliaryA = readA map { a =>
-    val entries: Data[Int,Int, BigDecimal] = a.domains._1.foldLeft(a.entries.toList) { (acc, cur) =>
-      ((cur, 0) -> BigDecimal(1))::acc
-    }.toMap
-    matrix[Int,Int, BigDecimal]((a.domains._1, a.domains._2 + 0), entries.toMap)
-  }
-
-  private def makeAuxiliary = for {
-    bs <- readAuxiliaryB
-    z0 <- readAuxiliaryZ0
-    zs <- readAuxiliaryZs
-    as <- readAuxiliaryA
-  } yield dictionary(bs, z0 ,zs, as)
-
-  private def readAuxiliaryLeaving = readB map {
-    _.entries.foldLeft((Int.MaxValue, BigDecimal(0))) { (found, cur) =>
-      if (cur._2 < found._2) cur else found
-    }._1
-  }
-
-  protected def solveAuxiliary(d: Dictionary) =
-    pivot(readAuxiliaryLeaving(d), 0, makeAuxiliary(d)) match {
-      case Cont(aux) => loopPivot(aux)
-    }
 }

@@ -2,7 +2,7 @@ package lecture
 
 import math.lp._
 
-object Week3 extends Simplex with Numerics with Matrices with Vectors with Domains {
+object Week3 extends SimplexPivot with SimplexDomain with Numerics with Matrices with Vectors with Domains {
   def main(args: Array[String]) {
 
     val D = dictionary(
