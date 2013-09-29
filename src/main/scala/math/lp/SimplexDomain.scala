@@ -28,9 +28,9 @@ trait SimplexDomain {
     def a = as
   }
 
-  protected def base = readA map { _.domains._1 }
+  protected def basic = readA map { _.domains._1 }
 
-  protected def nonBasic = readA map { _.domains._1 }
+  protected def nonBasic = readA map { _.domains._2 }
 
   protected def readA = Reader[Dictionary, Mat] { _.a }
 

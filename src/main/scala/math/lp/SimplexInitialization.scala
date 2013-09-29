@@ -36,16 +36,18 @@ trait SimplexInitialization {
       case Cont(aux) => loopPivot(aux)
     }
 
-  protected def mergeAuxiliary(aux: Dictionary, original: Dictionary): Dictionary = {
-    val z = base(aux).foldLeft(readData(readZ(original))) { (z, cur) =>
-        readData(row(cur, readA(aux))).foldLeft(z - cur) { (zz, pair) =>
-          zz + (pair._1 -> (zz(pair._1) + z(cur) * pair._2))
-        }
-    }
-    val z0 = base(aux).foldLeft(readZ0(original)) { (z, curr) =>
-      z + readData(readB(aux))(curr) * readData(readZ(original))(curr)
+  private def makeAuxiliaryZ(aux: Dictionary, original: Dictionary) =
+    basic(aux).foldLeft(readData(readZ(original))) { (z, cur) =>
+      readData(row(cur, readA(aux))).foldLeft(z - cur) { (zz, pair) =>
+        zz + (pair._1 -> (zz.getOrElse(pair._1,BigDecimal(0)) + readZ(original)(cur) * pair._2))
+      }
     }
 
-    dictionary(readB(aux), z0, sparseVector(base(aux), z), readA(aux))
-  }
+  private def makeAuxiliaryZ0(aux: Dictionary, original: Dictionary) =
+    basic(aux).foldLeft(readZ0(original)) { (z, curr) =>
+      z + readData(readB(aux))(curr) * readZ(original)(curr)
+    }
+
+  protected def updateAuxiliaryCost(aux: Dictionary, original: Dictionary): Dictionary =
+    dictionary(readB(aux), makeAuxiliaryZ0(aux, original), sparseVector(basic(aux), makeAuxiliaryZ(aux, original)), readA(aux))
 }

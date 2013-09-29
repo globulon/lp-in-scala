@@ -1,6 +1,6 @@
 package math.lp
 
-import fpatterns.{ Lens, Reader }
+import fpatterns.Reader
 
 trait SimplexPhases extends SimplexInitialization with SimplexPivot {
   self: SimplexDomain with Numerics with Domains with Vectors with Matrices =>
@@ -34,7 +34,7 @@ trait SimplexPhases extends SimplexInitialization with SimplexPivot {
   }
 
   private def solve(p: PhaseI): Solution = solveAuxiliary(inputDict(p)) match {
-    case (steps, Done(aux)) => solve(PhaseII(mergeAuxiliary(aux, inputDict(p))))
+    case (steps, Done(aux)) => solve(PhaseII(updateAuxiliaryCost(aux, inputDict(p))))
     case (steps, Unbounded) => Infeasible(UnboundedAuxiliary, inputDict(p))
   }
 
