@@ -5,6 +5,8 @@ import scala.language.implicitConversions
 trait Endo[A] {
   def run: A => A
 
+  def apply(a: A): A = run(a)
+
   def |+|(other: Endo[A])(implicit m: Monoid[Endo[A]]): Endo[A] = m op (this, other)
 }
 

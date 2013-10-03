@@ -1,9 +1,9 @@
 package math.lp
 
-import fpatterns.Reader
+import fpatterns.{ Monoids, Endo, Reader }
 
 trait SimplexInitialization {
-  self: SimplexPivot with SimplexDomain with Numerics with Domains with Vectors with Matrices =>
+  self: Monoids with SimplexPivot with SimplexDomain with Numerics with Domains with Vectors with Matrices =>
 
   private def readAuxiliaryB = Reader[Dictionary, Vec] { _.b }
 
@@ -36,18 +36,28 @@ trait SimplexInitialization {
       case Cont(aux) => loopPivot(aux)
     }
 
-  private def makeAuxiliaryZ(aux: Dictionary, original: Dictionary) =
-    basic(aux).foldLeft(readData(readZ(original))) { (z, cur) =>
+  private type StagePhaseII = Endo[Dictionary]
+
+  private def makeAuxiliaryZ(original: Dictionary) = Endo[Dictionary] { aux =>
+    val data = basic(aux).foldLeft(readData(readZ(original))) { (z, cur) =>
       readData(row(cur, readA(aux))).foldLeft(z - cur) { (zz, pair) =>
-        zz + (pair._1 -> (zz.getOrElse(pair._1,BigDecimal(0)) + readZ(original)(cur) * pair._2))
+        zz + (pair._1 -> (zz.getOrElse(pair._1, BigDecimal(0)) + readZ(original)(cur) * pair._2))
       }
-    }
+    } - 0
+    val domain = nonBasic(aux) - 0
+    dictionary(readB(aux), makeAuxiliaryZ0(aux, original), sparseVector(domain, data), readA(aux))
+  }
+
+  private def filterX0 = Endo[Dictionary] { aux =>
+
+    dictionary(readB(aux), readZ0(aux), readZ(aux), readA(aux))
+  }
 
   private def makeAuxiliaryZ0(aux: Dictionary, original: Dictionary) =
     basic(aux).foldLeft(readZ0(original)) { (z, curr) =>
       z + readData(readB(aux))(curr) * readZ(original)(curr)
     }
 
-  protected def updateAuxiliaryCost(aux: Dictionary, original: Dictionary): Dictionary =
-    dictionary(readB(aux), makeAuxiliaryZ0(aux, original), sparseVector(basic(aux), makeAuxiliaryZ(aux, original)), readA(aux))
+  protected def updateAuxiliaryCost(original: Dictionary) =
+    (makeAuxiliaryZ(original) |+| filterX0).run
 }

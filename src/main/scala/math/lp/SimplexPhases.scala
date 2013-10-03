@@ -1,9 +1,9 @@
 package math.lp
 
-import fpatterns.Reader
+import fpatterns.{ Monoids, Reader }
 
 trait SimplexPhases extends SimplexInitialization with SimplexPivot {
-  self: SimplexDomain with Numerics with Domains with Vectors with Matrices =>
+  self: Monoids with SimplexDomain with Numerics with Domains with Vectors with Matrices =>
 
   protected sealed trait SimplexPhase {
     def input: Dictionary
@@ -19,7 +19,7 @@ trait SimplexPhases extends SimplexInitialization with SimplexPivot {
   protected object UnboundedInput extends Infeasibility
   protected object UnboundedAuxiliary extends Infeasibility
 
-  protected def inputDict[P <: SimplexPhase] = Reader[P, Dictionary] { _.input}
+  protected def inputDict[P <: SimplexPhase] = Reader[P, Dictionary] { _.input }
 
   private def analyze = Reader[Dictionary, SimplexPhase] { d =>
     findValue(readB(d))(_ < 0) match {
@@ -34,7 +34,7 @@ trait SimplexPhases extends SimplexInitialization with SimplexPivot {
   }
 
   private def solve(p: PhaseI): Solution = solveAuxiliary(inputDict(p)) match {
-    case (steps, Done(aux)) => solve(PhaseII(updateAuxiliaryCost(aux, inputDict(p))))
+    case (steps, Done(aux)) => solve(PhaseII(updateAuxiliaryCost(inputDict(p))(aux)))
     case (steps, Unbounded) => Infeasible(UnboundedAuxiliary, inputDict(p))
   }
 

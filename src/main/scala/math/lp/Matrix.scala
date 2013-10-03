@@ -44,10 +44,13 @@ trait Vectors {
   protected def findValue[A, C: Numeric](v: Vector[A, C])(p: C => Boolean): Option[(A, C)] =
     v.data find { pair => p(pair._2) }
 
-  protected def modifyVec[A, C : Numeric](v: Vector[A, C], a: A)(f: C => C): Vector[A, C] =
+  protected def modifyVec[A, C: Numeric](v: Vector[A, C], a: A)(f: C => C): Vector[A, C] =
     sparseVector(v.domain, v.data + (a -> f(v(a))))
 
-  protected def readData[A, C] = Reader[Vector[A, C], Map[A, C]] {_.data}
+  protected def readData[A, C] = Reader[Vector[A, C], Map[A, C]] { _.data }
+
+  protected def readDomain[A, C] = Reader[Vector[A, C], Set[A]] { _.domain }
+
 }
 
 trait Matrices {
@@ -83,4 +86,6 @@ trait Matrices {
 
   protected def row[A, B, C: Numeric](a: A, mat: Matrix[A, B, C]): Vector[B, C] =
     sparseVector(mat.Col, mat.entries.filter(_._1._1 == a).map(e => (e._1._2, e._2)).toMap)
+
+  protected def readDomains[A, B, C] = Reader[Matrix[A, B, C], (Domain[A], Domain[B])] { _.domains }
 }
