@@ -34,7 +34,7 @@ trait SimplexPhases extends SimplexInitialization with SimplexPivot {
   }
 
   private def solve(p: PhaseI): Solution = solveAuxiliary(inputDict(p)) match {
-    case (steps, Done(aux)) => solve(PhaseII(updateAuxiliaryCost(inputDict(p))(aux)))
+    case (steps, Done(aux)) => solve(PhaseII(stagePhaseII(inputDict(p))(aux)))
     case (steps, Unbounded) => Infeasible(UnboundedAuxiliary, inputDict(p))
   }
 

@@ -15,17 +15,15 @@ final class SimplexPhasesSpec extends WordSpec
     with Numerics with Matrices with Vectors with Domains with Monoids {
 
   "Auxiliary serial 1" must {
-    "solve input dictionary 1" in {
+    "stage input dictionary 1" in {
       solveAuxiliaryDict("unitTests", "idict1") { (steps, aux, d) =>
-        steps should be(1)
-        readZ0(aux) should be(0)
-        basic(aux) should be(Set(1, 2, 6))
-        nonBasic(aux) should be(Set(0, 4, 5, 7, 3))
-        val result = updateAuxiliaryCost(d)(aux)
+        val result = stagePhaseII(d)(aux)
         readZ0(result) should be(-3)
-        readData(readZ(result)) should be(Map(5 -> 3, 7 -> 0, 3 -> -1, 4 -> 1))
+        readVectorData(readZ(result)) should be(Map(5 -> 3, 7 -> 0, 3 -> -1, 4 -> 1))
         readDomain(readZ(result)) should be(Set(3, 4, 5, 7))
         readDomains(readA(result)) should be ((Set(1,2,6), Set(3, 4, 5, 7)))
+        readMatrixData(readA(result)) should be (Map((2,5) -> 0, (1,5) -> -1, (6,7) -> -1, (6,4) -> -1, (6,5) -> -2, (6,3) -> -1, (1,4) -> 0, (1,3) -> 0, (2,7) -> 1, (2,4) -> 1, (1,7) -> -2, (2,3) -> 1) )
+        readDomain(readB(result)) should be(Set(1,2,6))
       }
     }
   }
@@ -44,5 +42,4 @@ final class SimplexPhasesSpec extends WordSpec
     }
 
   private def location(prefix: String, name: String) = Paths.get("src", "test", "resources", "week4", prefix, name).toUri
-
 }

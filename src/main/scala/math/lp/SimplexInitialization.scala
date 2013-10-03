@@ -12,7 +12,7 @@ trait SimplexInitialization {
   private def readAuxiliaryZs = nonBasic map { b => sparseVector[Int, BigDecimal](b + 0, Map(0 -> -1)) }
 
   private def readAuxiliaryA = readA map { a =>
-    val entries: Data[Int, Int, BigDecimal] = a.domains._1.foldLeft(a.entries.toList) { (acc, cur) =>
+    val entries: Data[Int, Int, BigDecimal] = a.domains._1.foldLeft(readMatrixData(a).toList) { (acc, cur) =>
       ((cur, 0) -> BigDecimal(1)) :: acc
     }.toMap
     matrix[Int, Int, BigDecimal]((a.domains._1, a.domains._2 + 0), entries.toMap)
@@ -38,26 +38,27 @@ trait SimplexInitialization {
 
   private type StagePhaseII = Endo[Dictionary]
 
-  private def makeAuxiliaryZ(original: Dictionary) = Endo[Dictionary] { aux =>
-    val data = basic(aux).foldLeft(readData(readZ(original))) { (z, cur) =>
-      readData(row(cur, readA(aux))).foldLeft(z - cur) { (zz, pair) =>
+  private def stageCost(original: Dictionary) = Endo[Dictionary] { aux =>
+    val data = basic(aux).foldLeft(readVectorData(readZ(original))) { (z, cur) =>
+      readVectorData(row(cur, readA(aux))).foldLeft(z - cur) { (zz, pair) =>
         zz + (pair._1 -> (zz.getOrElse(pair._1, BigDecimal(0)) + readZ(original)(cur) * pair._2))
       }
     } - 0
     val domain = nonBasic(aux) - 0
-    dictionary(readB(aux), makeAuxiliaryZ0(aux, original), sparseVector(domain, data), readA(aux))
+    dictionary(readB(aux), readZ0(aux), sparseVector(domain, data), readA(aux))
   }
 
   private def filterX0 = Endo[Dictionary] { aux =>
-
-    dictionary(readB(aux), readZ0(aux), readZ(aux), readA(aux))
+    dictionary(readB(aux), readZ0(aux), readZ(aux), filterColumn[Int, Int, BigDecimal](0).run(readA(aux)))
   }
 
-  private def makeAuxiliaryZ0(aux: Dictionary, original: Dictionary) =
-    basic(aux).foldLeft(readZ0(original)) { (z, curr) =>
-      z + readData(readB(aux))(curr) * readZ(original)(curr)
+  private def stageCostValue(original: Dictionary) = Endo[Dictionary] { aux =>
+    val z0 = basic(aux).foldLeft(readZ0(original)) { (z, curr) =>
+      z + readVectorData(readB(aux))(curr) * readZ(original)(curr)
     }
+    dictionary(readB(aux), z0, readZ(aux), readA(aux))
+  }
 
-  protected def updateAuxiliaryCost(original: Dictionary) =
-    (makeAuxiliaryZ(original) |+| filterX0).run
+  protected def stagePhaseII(original: Dictionary) =
+    (stageCost(original) |+| stageCostValue(original) |+| filterX0).run
 }
