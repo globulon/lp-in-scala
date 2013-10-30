@@ -23,7 +23,7 @@ trait SimplexPivot {
   private def enteringCoef(n: Int, d: Dictionary) = filterValues(col(n, d.a)) { negative }
 
   protected def leavingVars(entering: Int, d: Dictionary) =
-    map(enteringCoef(entering, d)) { (index, c) => -(d.b(index) / c) }
+    mapVector(enteringCoef(entering, d)) { (index, c) => -(d.b(index) / c) }
 
   private def selectLeavingVar(vars: Vec): Option[Int] = vars.data.size match {
     case 0 => None

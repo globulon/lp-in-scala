@@ -22,7 +22,6 @@ object Reader {
   def flatMap[Ctx, A, B](ra: Reader[Ctx, A])(f: A => Reader[Ctx, B]): Reader[Ctx, B] =
     Reader { r => f(ra.run(r)).run(r) }
 
-  def ask[Ctx] = Reader[Ctx, Ctx](identity)
 
   def compose[Ctx, A, B](rc: Reader[Ctx, A])(ra: Reader[A, B]): Reader[Ctx, B] =
     Reader(rc.run andThen ra.run)
@@ -32,4 +31,10 @@ object Reader {
 
   def apply[Ctx, A, B](rf: Reader[Ctx, A => B])(ra: Reader[Ctx, A]): Reader[Ctx, B] =
     Reader { ctx => rf.run(ctx).apply(ra.run(ctx)) }
+}
+
+trait Readers {
+  protected def ask[Ctx] = Reader[Ctx, Ctx](identity)
+
+  protected def reader[Ctx, A](get: Ctx => A): Reader[Ctx, A] = Reader { get }
 }

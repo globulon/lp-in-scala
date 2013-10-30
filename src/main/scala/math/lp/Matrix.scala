@@ -1,12 +1,14 @@
 package math.lp
 
 import scala.language.postfixOps
-import fpatterns.{Endo, Reader}
+import fpatterns.{State, Endo, Reader}
 
 trait Domains {
   protected type Domain[A] = Set[A]
 
   protected def domain[A](as: Set[A]): Domain[A] = as
+
+  protected def domain[A](as: A*): Domain[A] = domain(as.toSet)
 }
 
 trait Vectors {
@@ -38,18 +40,18 @@ trait Vectors {
   protected def filterKeys[A, C: Numeric](v: Vector[A, C])(p: A => Boolean): Vector[A, C] =
     sparseVector(v.domain, v.data.filter(e => p(e._1)))
 
-  protected def map[A, C: Numeric, D: Numeric](v: Vector[A, C])(f: (A, C) => D): Vector[A, D] =
+  protected def mapVector[A, C: Numeric, D: Numeric](v: Vector[A, C])(f: (A, C) => D): Vector[A, D] =
     sparseVector(v.domain, v.data.map { p => (p._1, f.tupled(p)) })
 
   protected def findValue[A, C: Numeric](v: Vector[A, C])(p: C => Boolean): Option[(A, C)] =
     v.data find { pair => p(pair._2) }
 
-  protected def modifyVec[A, C: Numeric](v: Vector[A, C], a: A)(f: C => C): Vector[A, C] =
-    sparseVector(v.domain, v.data + (a -> f(v(a))))
-
   protected def readVectorData[A, C] = Reader[Vector[A, C], Map[A, C]] { _.data }
 
   protected def readDomain[A, C] = Reader[Vector[A, C], Set[A]] { _.domain }
+
+  protected def addEntry[A, C: Numeric](a: A, c: C) =
+    Endo[Vector[A, C]] { v => sparseVector(readDomain(v) + a, readVectorData(v) + (a -> c)) }
 
 }
 
@@ -105,5 +107,11 @@ trait Matrices {
 
   protected def filterColumn[A, B, C: Numeric](b: B) = Endo[Matrix[A, B, C]] { m =>
     matrix((readDomainA(m), readDomainB(m) - b), readMatrixData(m) filterNot(readEntryKeyB(_) == b))
+  }
+
+  protected def addRow[A, B, C: Numeric](a: A, v: Vector[B, C]) = Endo[Matrix[A, B, C]] { m =>
+    matrix(
+      (readDomainA(m) + a, readDomainB(m)),
+       readMatrixData(m) ++ readVectorData(v).map {p => ((a, p._1), p._2) })
   }
 }

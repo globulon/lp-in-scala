@@ -39,4 +39,13 @@ trait SimplexDomain {
   protected def readB = Reader[Dictionary, Vec] { _.b }
 
   protected def readZ0 = Reader[Dictionary, BigDecimal] { _.z0 }
+
+  protected def variables = for {
+    b <- basic
+    n <- nonBasic
+  } yield b ++ n
+
+  protected def getB(b: Int) = readB map (readVectorData(_).get(b))
+
+  protected def getA(b: Int, n: Int) = readA map (readMatrixData(_).get((b,n)))
 }
